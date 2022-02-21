@@ -8,7 +8,6 @@ public class PlayerScript : MonoBehaviour
     float speed = 3.0f;
     [SerializeField]
     float jumpForce = 7.0f;
-    Rigidbody2D rb2D;
     [SerializeField, Range(0.01f, 10f)]
     float rayDistance = 2f;
     [SerializeField]
@@ -18,7 +17,10 @@ public class PlayerScript : MonoBehaviour
     [SerializeField]
     Vector3 rayOrigin;
 
+    Rigidbody2D rb2D;
     GameInputs gameInputs;
+    SpriteRenderer sprR;
+    Animator anim;
 
     void Awake()
     {
@@ -37,8 +39,20 @@ public class PlayerScript : MonoBehaviour
     void Start()
     {
         rb2D = GetComponent<Rigidbody2D>();
+        sprR = GetComponent<SpriteRenderer>();
+        anim = GetComponent<Animator>();
         gameInputs.Gameplay.Jump.performed += _=> Jump();
         gameInputs.Gameplay.Jump.canceled += _=> JumpCanceled();
+    }
+
+    void Update()
+    {
+        sprR.flipX = FlipSprite;
+        if(!IsGrounding) //sirve ahorita, alomejor cuando incluya animación de salto habrá q cambiarla.
+        {
+            anim.SetFloat("Blend", 0);
+        }
+        
     }
 
     void FixedUpdate()
@@ -59,8 +73,14 @@ public class PlayerScript : MonoBehaviour
         rb2D.velocity = new Vector2(rb2D.velocity.x, 0f);
     }
 
+    void LateUpdate()
+    {
+        anim.SetFloat("Blend", Mathf.Abs(Axis.x));
+    }
+
     Vector2 Axis => new Vector2(gameInputs.Gameplay.AxisX.ReadValue<float>(), gameInputs.Gameplay.AxisY.ReadValue<float>());
 
+    bool FlipSprite => Axis.x > 0 ? false : Axis.x<0 ? true : sprR.flipX;
     bool IsGrounding => Physics2D.Raycast(transform.position + rayOrigin, Vector2.down, rayDistance, groundLayer);
 
 
@@ -68,5 +88,14 @@ public class PlayerScript : MonoBehaviour
     {
         Gizmos.color = rayColor;
         Gizmos.DrawRay(transform.position + rayOrigin, Vector2.down * rayDistance);
+    }
+
+    void OnTriggerEnter2D(Collider2D col)
+    {
+        if(col.CompareTag("art"))
+        {
+            ArtScript art = col.GetComponent<ArtScript>();
+            Destroy(col.gameObject);
+        }
     }
 }
