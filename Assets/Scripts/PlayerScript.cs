@@ -62,9 +62,10 @@ public class PlayerScript : MonoBehaviour
 
     void Jump()
     {
-        if(IsGrounding)
+        if(IsGrounding || GameManager.instance.GetEnemy.top)
         {
             rb2D.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+            anim.SetTrigger("jump");
         }
     }
 
@@ -76,12 +77,13 @@ public class PlayerScript : MonoBehaviour
     void LateUpdate()
     {
         anim.SetFloat("Blend", Mathf.Abs(Axis.x));
+        anim.SetBool("ground", IsGrounding);
     }
 
     Vector2 Axis => new Vector2(gameInputs.Gameplay.AxisX.ReadValue<float>(), gameInputs.Gameplay.AxisY.ReadValue<float>());
 
     bool FlipSprite => Axis.x > 0 ? false : Axis.x<0 ? true : sprR.flipX;
-    bool IsGrounding => Physics2D.Raycast(transform.position + rayOrigin, Vector2.down, rayDistance, groundLayer);
+    bool IsGrounding => Physics2D.Raycast(transform.position + rayOrigin, Vector2.down, rayDistance, groundLayer) || GameManager.instance.GetEnemy.top;
 
 
     void OnDrawGizmosSelected()
@@ -98,4 +100,7 @@ public class PlayerScript : MonoBehaviour
             Destroy(col.gameObject);
         }
     }
+
+    public void RunAnimationDamage() => anim.SetTrigger("damage");
+
 }
